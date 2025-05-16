@@ -2,23 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Auto-Submit QR → Google Form</title>
+  <title>QR → Auto-Submit with Toggle & Reset</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; }
-    #reader { width: 300px; margin-bottom: 1em; }
+    #reader { width: 300px; height: 300px; margin-bottom: 1em; border: 1px solid #ccc; }
     #output { margin-top: 1em; background: #eee; padding: 1em; border-radius: 5px; }
-    button { padding: 10px 20px; margin: 0.5em 0; font-size: 1em; }
+    button { padding: 10px 20px; margin: 0.5em 0.5em 0 0; font-size: 1em; }
   </style>
 </head>
 <body>
-  <h2>QR → Auto-Submit to Google Form</h2>
+  <h2>QR → Auto-Submit with Camera Toggle & Reset</h2>
+
+  <div>
+    <button id="startBtn">📷 Turn Camera On</button>
+    <button id="stopBtn" disabled>🚫 Turn Camera Off</button>
+  </div>
   <div id="reader"></div>
 
   <label for="steviloKosov">Število Kosov:</label>
   <input type="number" id="steviloKosov"><br><br>
 
-  <button onclick="submitForm()">Scan & Submit</button>
+  <button onclick="submitForm()">Submit Now</button>
+  <button id="resetBtn">🔄 Reset</button>
 
   <div id="output">
     <h3>Collected Data:</h3>
@@ -26,6 +32,7 @@
   </div>
 
   <script>
+    const qrScanner = new Html5Qrcode("reader");
     const collectedData = {};
 
     function updateDisplay() {
@@ -34,12 +41,54 @@
     }
 
     function handleScannedData(text) {
-      const [k,v] = text.split('=');
+      const [k, v] = text.split('=');
       if (k && v) {
         collectedData[k.trim()] = v.trim();
         updateDisplay();
       }
     }
+
+    // Start the camera scanner
+    async function startScanner() {
+      try {
+        await qrScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          handleScannedData,
+          () => {}
+        );
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+      } catch (err) {
+        console.error("Scanner start failed:", err);
+      }
+    }
+
+    // Stop the camera scanner
+    async function stopScanner() {
+      try {
+        await qrScanner.stop();
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+      } catch (err) {
+        console.error("Scanner stop failed:", err);
+      }
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startScanner);
+    document.getElementById('stopBtn').addEventListener('click', stopScanner);
+
+    // Reset collected data and input
+    function resetAll() {
+      // Clear collected QR data
+      Object.keys(collectedData).forEach(key => delete collectedData[key]);
+      // Clear manual input
+      document.getElementById('steviloKosov').value = '';
+      // Update display
+      updateDisplay();
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
 
     async function submitForm() {
       const postUrl =
@@ -49,6 +98,7 @@
         "entry.2022164257": collectedData.id_programa || "",
         "entry.446298209": document.getElementById('steviloKosov').value || ""
       });
+
       try {
         await fetch(postUrl, {
           method: "POST",
@@ -57,23 +107,15 @@
           body: params.toString()
         });
         alert("✓ Data submitted!");
-        // reset
-        collectedData.id_palete = "";
-        collectedData.id_programa = "";
-        document.getElementById('steviloKosov').value = "";
-        updateDisplay();
+
+        // Optionally reset for next entry
+        resetAll();
+
       } catch (e) {
         console.error(e);
         alert("✗ Submission failed");
       }
     }
-
-    new Html5Qrcode("reader").start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
-      (txt) => handleScannedData(txt),
-      () => {}
-    );
   </script>
 </body>
 </html>
