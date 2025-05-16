@@ -2,20 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>QR → Auto-Submit with Toggle & Reset</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; padding: 1em; }
-    #controls { margin-bottom: 1em; }
-    #reader { width: 100%; max-width: 300px; height: 300px; margin-bottom: 1em; border: 1px solid #ccc; position: relative; }
-    #output { margin-top: 1em; background: #eee; padding: 1em; border-radius: 5px; }
-    button { padding: 10px 20px; margin: 0.5em 0.5em 0 0; font-size: 1em; }
-    label { display: inline-block; margin-right: 1em; }
-    /* Ensure video stays within reader bounds */
+    body { font-family: sans-serif; padding: 1em; margin: 0; }
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      margin-bottom: 1em;
+      align-items: center;
+    }
+    #controls > * {
+      flex: 1 1 auto;
+      min-width: 100px;
+    }
+    #controls button, #controls input {
+      font-size: 1em;
+      padding: 0.75em;
+      flex: 1 1 100%;
+    }
+    #reader {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      margin-bottom: 1em;
+      border: 1px solid #ccc;
+      position: relative;
+    }
     #reader video {
       object-fit: cover;
       width: 100% !important;
       height: 100% !important;
+    }
+    #output {
+      background: #eee;
+      padding: 1em;
+      border-radius: 5px;
+    }
+    @media (min-width: 600px) {
+      #controls button, #controls input {
+        flex: 1 1 auto;
+        min-width: 120px;
+      }
+      #controls {
+        gap: 1em;
+      }
     }
   </style>
 </head>
@@ -25,10 +57,8 @@
   <div id="controls">
     <button id="startBtn">📷 Turn Camera On</button>
     <button id="stopBtn" disabled>🚫 Turn Camera Off</button>
-    <label for="steviloKosov">Število Kosov:
-      <input type="number" id="steviloKosov" style="width: 80px;">
-    </label>
-    <button onclick="submitForm()">Submit Now</button>
+    <input type="number" id="steviloKosov" placeholder="Št. Kosov">
+    <button id="submitBtn">Submit Now</button>
     <button id="resetBtn">🔄 Reset</button>
   </div>
 
@@ -61,12 +91,12 @@
       try {
         await qrScanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
           handleScannedData,
           () => {}
         );
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('stopBtn').disabled = false;
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
       } catch (err) {
         console.error("Scanner start failed:", err);
       }
@@ -76,35 +106,27 @@
     async function stopScanner() {
       try {
         await qrScanner.stop();
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('stopBtn').disabled = true;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
       } catch (err) {
         console.error("Scanner stop failed:", err);
       }
     }
 
-    document.getElementById('startBtn').addEventListener('click', startScanner);
-    document.getElementById('stopBtn').addEventListener('click', stopScanner);
-
-    // Reset collected data and input
     function resetAll() {
       Object.keys(collectedData).forEach(key => delete collectedData[key]);
-      document.getElementById('steviloKosov').value = '';
+      steviloKosov.value = '';
       updateDisplay();
     }
 
-    document.getElementById('resetBtn').addEventListener('click', resetAll);
-
-    // Submit via POST
     async function submitForm() {
       const postUrl =
         "https://docs.google.com/forms/d/e/1FAIpQLSdp4CYaItEcH74mzBMkLUkwU8qW4VsSFSUe56tYmXMO2Ex2cQ/formResponse";
       const params = new URLSearchParams({
         "entry.486792126": collectedData.id_palete || "",
         "entry.2022164257": collectedData.id_programa || "",
-        "entry.446298209": document.getElementById('steviloKosov').value || ""
+        "entry.446298209": steviloKosov.value || ""
       });
-
       try {
         await fetch(postUrl, {
           method: "POST",
@@ -119,6 +141,17 @@
         alert("✗ Submission failed");
       }
     }
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const steviloKosov = document.getElementById('steviloKosov');
+
+    startBtn.addEventListener('click', startScanner);
+    stopBtn.addEventListener('click', stopScanner);
+    resetBtn.addEventListener('click', resetAll);
+    submitBtn.addEventListener('click', submitForm);
   </script>
 </body>
 </html>
