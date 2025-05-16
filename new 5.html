@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Material za proizvodnjo</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    #reader { width: 300px; margin-bottom: 1em; }
+    #output { margin-top: 1em; background: #eee; padding: 1em; border-radius: 5px; }
+    button { padding: 10px 20px; margin: 0.5em 0; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h2>Scan QR Codes to Fill Google Form</h2>
+  <div id="reader"></div>
+
+  <label for="steviloKosov">Število Kosov:</label>
+  <input type="number" id="steviloKosov" name="steviloKosov"><br><br>
+
+  <button onclick="submitForm()">Submit to Google Form</button>
+
+  <div id="output">
+    <h3>Collected Data:</h3>
+    <pre id="dataDisplay">{}</pre>
+  </div>
+
+  <script>
+    const collectedData = {};
+
+    function updateDisplay() {
+      document.getElementById('dataDisplay').textContent = JSON.stringify(collectedData, null, 2);
+    }
+
+    function handleScannedData(decodedText) {
+      const [key, value] = decodedText.split('=');
+      if (key && value) {
+        collectedData[key.trim()] = value.trim();
+        updateDisplay();
+      } else {
+        alert("Invalid QR data. Must be in 'key=value' format.");
+      }
+    }
+
+    function submitForm() {
+      const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSdp4CYaItEcH74mzBMkLUkwU8qW4VsSFSUe56tYmXMO2Ex2cQ/viewform?usp=pp_url";
+      const params = new URLSearchParams({
+        "entry.123456": collectedData.id_palete || "",
+        "entry.654321": collectedData.id_programa || "",
+        "entry.789012": document.getElementById('steviloKosov').value || ""
+      });
+      const finalURL = formBaseURL + "&" + params.toString();
+      window.open(finalURL, "_blank");
+    }
+
+    const qrCodeScanner = new Html5Qrcode("reader");
+    qrCodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      (decodedText, decodedResult) => {
+        handleScannedData(decodedText);
+      },
+      (errorMessage) => {
+        // Optional: console.log(errorMessage);
+      }
+    );
+  </script>
+</body>
+</html>
