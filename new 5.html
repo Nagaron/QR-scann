@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Material za proizvodnjo</title>
+  <title>Auto-Submit QR → Google Form</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; }
@@ -12,13 +12,13 @@
   </style>
 </head>
 <body>
-  <h2>Scan QR Codes to Fill Google Form</h2>
+  <h2>QR → Auto-Submit to Google Form</h2>
   <div id="reader"></div>
 
   <label for="steviloKosov">Število Kosov:</label>
-  <input type="number" id="steviloKosov" name="steviloKosov"><br><br>
+  <input type="number" id="steviloKosov"><br><br>
 
-  <button onclick="submitForm()">Submit to Google Form</button>
+  <button onclick="submitForm()">Scan & Submit</button>
 
   <div id="output">
     <h3>Collected Data:</h3>
@@ -29,40 +29,50 @@
     const collectedData = {};
 
     function updateDisplay() {
-      document.getElementById('dataDisplay').textContent = JSON.stringify(collectedData, null, 2);
+      document.getElementById('dataDisplay').textContent =
+        JSON.stringify(collectedData, null, 2);
     }
 
-    function handleScannedData(decodedText) {
-      const [key, value] = decodedText.split('=');
-      if (key && value) {
-        collectedData[key.trim()] = value.trim();
+    function handleScannedData(text) {
+      const [k,v] = text.split('=');
+      if (k && v) {
+        collectedData[k.trim()] = v.trim();
         updateDisplay();
-      } else {
-        alert("Invalid QR data. Must be in 'key=value' format.");
       }
     }
 
-    function submitForm() {
-      const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSdp4CYaItEcH74mzBMkLUkwU8qW4VsSFSUe56tYmXMO2Ex2cQ/viewform?usp=pp_url";
+    async function submitForm() {
+      const postUrl =
+        "https://docs.google.com/forms/d/e/1FAIpQLSdp4CYaItEcH74mzBMkLUkwU8qW4VsSFSUe56tYmXMO2Ex2cQ/formResponse";
       const params = new URLSearchParams({
         "entry.486792126": collectedData.id_palete || "",
         "entry.2022164257": collectedData.id_programa || "",
         "entry.446298209": document.getElementById('steviloKosov').value || ""
       });
-      const finalURL = formBaseURL + "&" + params.toString();
-      window.open(finalURL, "_blank");
+      try {
+        await fetch(postUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params.toString()
+        });
+        alert("✓ Data submitted!");
+        // reset
+        collectedData.id_palete = "";
+        collectedData.id_programa = "";
+        document.getElementById('steviloKosov').value = "";
+        updateDisplay();
+      } catch (e) {
+        console.error(e);
+        alert("✗ Submission failed");
+      }
     }
 
-    const qrCodeScanner = new Html5Qrcode("reader");
-    qrCodeScanner.start(
+    new Html5Qrcode("reader").start(
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
-      (decodedText, decodedResult) => {
-        handleScannedData(decodedText);
-      },
-      (errorMessage) => {
-        // Optional: console.log(errorMessage);
-      }
+      (txt) => handleScannedData(txt),
+      () => {}
     );
   </script>
 </body>
