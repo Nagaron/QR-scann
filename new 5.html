@@ -6,25 +6,33 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; }
-    #reader { width: 300px; height: 300px; margin-bottom: 1em; border: 1px solid #ccc; }
+    #controls { margin-bottom: 1em; }
+    #reader { width: 100%; max-width: 300px; height: 300px; margin-bottom: 1em; border: 1px solid #ccc; position: relative; }
     #output { margin-top: 1em; background: #eee; padding: 1em; border-radius: 5px; }
     button { padding: 10px 20px; margin: 0.5em 0.5em 0 0; font-size: 1em; }
+    label { display: inline-block; margin-right: 1em; }
+    /* Ensure video stays within reader bounds */
+    #reader video {
+      object-fit: cover;
+      width: 100% !important;
+      height: 100% !important;
+    }
   </style>
 </head>
 <body>
-  <h2>QR → Auto-Submit with Camera Toggle & Reset</h2>
+  <h2>QR → Auto-Submit with Toggle & Reset</h2>
 
-  <div>
+  <div id="controls">
     <button id="startBtn">📷 Turn Camera On</button>
     <button id="stopBtn" disabled>🚫 Turn Camera Off</button>
+    <label for="steviloKosov">Število Kosov:
+      <input type="number" id="steviloKosov" style="width: 80px;">
+    </label>
+    <button onclick="submitForm()">Submit Now</button>
+    <button id="resetBtn">🔄 Reset</button>
   </div>
+
   <div id="reader"></div>
-
-  <label for="steviloKosov">Število Kosov:</label>
-  <input type="number" id="steviloKosov"><br><br>
-
-  <button onclick="submitForm()">Submit Now</button>
-  <button id="resetBtn">🔄 Reset</button>
 
   <div id="output">
     <h3>Collected Data:</h3>
@@ -80,16 +88,14 @@
 
     // Reset collected data and input
     function resetAll() {
-      // Clear collected QR data
       Object.keys(collectedData).forEach(key => delete collectedData[key]);
-      // Clear manual input
       document.getElementById('steviloKosov').value = '';
-      // Update display
       updateDisplay();
     }
 
     document.getElementById('resetBtn').addEventListener('click', resetAll);
 
+    // Submit via POST
     async function submitForm() {
       const postUrl =
         "https://docs.google.com/forms/d/e/1FAIpQLSdp4CYaItEcH74mzBMkLUkwU8qW4VsSFSUe56tYmXMO2Ex2cQ/formResponse";
@@ -107,10 +113,7 @@
           body: params.toString()
         });
         alert("✓ Data submitted!");
-
-        // Optionally reset for next entry
         resetAll();
-
       } catch (e) {
         console.error(e);
         alert("✗ Submission failed");
