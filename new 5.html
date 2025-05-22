@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>QR → Auto-Submit with Toggle & Reset</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
@@ -57,7 +57,12 @@
   <div id="controls">
     <button id="startBtn">📷 Turn Camera On</button>
     <button id="stopBtn" disabled>🚫 Turn Camera Off</button>
-    <input type="number" id="steviloKosov" placeholder="Št. Kosov">
+
+    <!-- Manual input fields for Program ID and Pallet ID -->
+    <input type="text" id="id_programa" placeholder="Program ID" autocomplete="off" />
+    <input type="text" id="id_palete" placeholder="Pallet ID" autocomplete="off" />
+
+    <input type="number" id="steviloKosov" placeholder="Št. Kosov" min="0" />
     <button id="submitBtn">Submit Now</button>
     <button id="resetBtn">🔄 Reset</button>
   </div>
@@ -73,6 +78,15 @@
     const qrScanner = new Html5Qrcode("reader");
     const collectedData = {};
 
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const steviloKosov = document.getElementById('steviloKosov');
+    const idProgramaInput = document.getElementById('id_programa');
+    const idPaleteInput = document.getElementById('id_palete');
+
     function updateDisplay() {
       document.getElementById('dataDisplay').textContent =
         JSON.stringify(collectedData, null, 2);
@@ -82,6 +96,11 @@
       const [k, v] = text.split('=');
       if (k && v) {
         collectedData[k.trim()] = v.trim();
+
+        // Update manual inputs if matching keys scanned
+        if (k.trim() === 'id_programa') idProgramaInput.value = v.trim();
+        if (k.trim() === 'id_palete') idPaleteInput.value = v.trim();
+
         updateDisplay();
       }
     }
@@ -116,6 +135,8 @@
     function resetAll() {
       Object.keys(collectedData).forEach(key => delete collectedData[key]);
       steviloKosov.value = '';
+      idProgramaInput.value = '';
+      idPaleteInput.value = '';
       updateDisplay();
     }
 
@@ -142,11 +163,13 @@
       }
     }
 
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const steviloKosov = document.getElementById('steviloKosov');
+    // Sync manual inputs to collectedData
+    [idProgramaInput, idPaleteInput].forEach(input => {
+      input.addEventListener('input', () => {
+        collectedData[input.id] = input.value.trim();
+        updateDisplay();
+      });
+    });
 
     startBtn.addEventListener('click', startScanner);
     stopBtn.addEventListener('click', stopScanner);
