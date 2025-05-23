@@ -20,7 +20,10 @@
     }
     #controls button, #controls input {
       font-size: 1em;
-      padding: 0.75em;
+      height: 80px;           /* Set height to 80px */
+      padding-top: 0;         /* Remove top padding */
+      padding-bottom: 0;      /* Remove bottom padding */
+      line-height: 80px;      /* Vertically center text */
       flex: 1 1 100%;
     }
     #reader {
@@ -152,7 +155,7 @@
           body: params.toString()
         });
         alert("✓ Data submitted!");
-        // Optionally clear fields after submit, but no reset button anymore
+        // Clear inputs and data after submit
         steviloKosov.value = '';
         idProgramaInput.value = '';
         idPaleteInput.value = '';
