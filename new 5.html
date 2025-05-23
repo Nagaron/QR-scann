@@ -55,8 +55,7 @@
   <h2>QR → Auto-Submit with Toggle & Reset</h2>
 
   <div id="controls">
-    <button id="startBtn">📷 Turn Camera On</button>
-    <button id="stopBtn" disabled>🚫 Turn Camera Off</button>
+    <button id="cameraToggleBtn">📷 Turn Camera On</button>
 
     <!-- Manual input fields for Program ID and Pallet ID -->
     <input type="text" id="id_programa" placeholder="Program ID" autocomplete="off" />
@@ -64,7 +63,6 @@
 
     <input type="number" id="steviloKosov" placeholder="Št. Kosov" min="0" />
     <button id="submitBtn">Submit Now</button>
-    <button id="resetBtn">🔄 Reset</button>
   </div>
 
   <div id="reader"></div>
@@ -78,14 +76,14 @@
     const qrScanner = new Html5Qrcode("reader");
     const collectedData = {};
 
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
+    const cameraToggleBtn = document.getElementById('cameraToggleBtn');
     const submitBtn = document.getElementById('submitBtn');
-    const resetBtn = document.getElementById('resetBtn');
 
     const steviloKosov = document.getElementById('steviloKosov');
     const idProgramaInput = document.getElementById('id_programa');
     const idPaleteInput = document.getElementById('id_palete');
+
+    let isCameraOn = false;
 
     function updateDisplay() {
       document.getElementById('dataDisplay').textContent =
@@ -105,7 +103,6 @@
       }
     }
 
-    // Start the camera scanner
     async function startScanner() {
       try {
         await qrScanner.start(
@@ -114,30 +111,29 @@
           handleScannedData,
           () => {}
         );
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
+        isCameraOn = true;
+        cameraToggleBtn.textContent = "🚫 Turn Camera Off";
       } catch (err) {
         console.error("Scanner start failed:", err);
       }
     }
 
-    // Stop the camera scanner
     async function stopScanner() {
       try {
         await qrScanner.stop();
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
+        isCameraOn = false;
+        cameraToggleBtn.textContent = "📷 Turn Camera On";
       } catch (err) {
         console.error("Scanner stop failed:", err);
       }
     }
 
-    function resetAll() {
-      Object.keys(collectedData).forEach(key => delete collectedData[key]);
-      steviloKosov.value = '';
-      idProgramaInput.value = '';
-      idPaleteInput.value = '';
-      updateDisplay();
+    async function toggleCamera() {
+      if (isCameraOn) {
+        await stopScanner();
+      } else {
+        await startScanner();
+      }
     }
 
     async function submitForm() {
@@ -156,7 +152,12 @@
           body: params.toString()
         });
         alert("✓ Data submitted!");
-        resetAll();
+        // Optionally clear fields after submit, but no reset button anymore
+        steviloKosov.value = '';
+        idProgramaInput.value = '';
+        idPaleteInput.value = '';
+        Object.keys(collectedData).forEach(key => delete collectedData[key]);
+        updateDisplay();
       } catch (e) {
         console.error(e);
         alert("✗ Submission failed");
@@ -171,9 +172,7 @@
       });
     });
 
-    startBtn.addEventListener('click', startScanner);
-    stopBtn.addEventListener('click', stopScanner);
-    resetBtn.addEventListener('click', resetAll);
+    cameraToggleBtn.addEventListener('click', toggleCamera);
     submitBtn.addEventListener('click', submitForm);
   </script>
 </body>
