@@ -3,41 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Poraba Materiala</title>
+  <title>Poraba Material</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; margin: 0; }
 
-    #controls {
+    /* Container styles for inputs and buttons */
+    #inputControls, #buttonControls {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5em;
       margin-bottom: 1em;
-      align-items: center;
     }
 
-    #controls > * {
-      flex: 1 1 auto;
-      min-width: 100px;
+    /* Inputs and buttons full width on small screens */
+    #inputControls > input,
+    #buttonControls > button {
+      flex: 1 1 100%;
+      min-width: 0;
     }
 
     /* Buttons 80px tall */
-    #controls button {
+    #buttonControls > button {
       font-size: 1em;
       height: 80px;
       padding-top: 0;
       padding-bottom: 0;
       line-height: 80px;
-      flex: 1 1 100%;
     }
 
     /* Inputs 40px tall */
-    #controls input {
+    #inputControls > input {
       font-size: 1em;
       height: 40px;
       padding: 0 0.5em;
       line-height: normal;
-      flex: 1 1 100%;
     }
 
     #reader {
@@ -59,44 +59,18 @@
       display: none;
     }
 
+    /* Larger screens: inputs and buttons sized naturally */
     @media (min-width: 600px) {
-      #controls button, #controls input {
+      #inputControls > input,
+      #buttonControls > button {
         flex: 1 1 auto;
         min-width: 120px;
       }
-
-      #controls {
-        gap: 1em;
-      }
-    }
-
-    /* Layout adjustments */
-
-    /* Separate controls into two groups: inputs above, buttons below */
-    #inputControls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5em;
-      margin-bottom: 1em;
-      align-items: center;
-    }
-
-    #buttonControls {
-      display: flex;
-      gap: 0.5em;
-      margin-bottom: 1em;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-    }
-
-    #buttonControls button {
-      flex: 0 1 auto;
-      min-width: 120px;
     }
   </style>
 </head>
 <body>
-  <h2>QR → Auto-Submit with Toggle & Reset</h2>
+  <h2>Poraba material</h2>
 
   <div id="inputControls">
     <!-- Manual input fields for Program ID and Pallet ID -->
@@ -131,8 +105,7 @@
     let isCameraOn = false;
 
     function updateDisplay() {
-      // We hide the collected data display, so no need to update it visibly
-      // but keep internal data updated anyway
+      // Hidden output, no visible update needed
     }
 
     function handleScannedData(text) {
@@ -140,7 +113,6 @@
       if (k && v) {
         collectedData[k.trim()] = v.trim();
 
-        // Update manual inputs if matching keys scanned
         if (k.trim() === 'id_programa') idProgramaInput.value = v.trim();
         if (k.trim() === 'id_palete') idPaleteInput.value = v.trim();
 
@@ -197,7 +169,6 @@
           body: params.toString()
         });
         alert("✓ Data submitted!");
-        // Clear inputs and collected data after submit
         steviloKosov.value = '';
         idProgramaInput.value = '';
         idPaleteInput.value = '';
@@ -209,7 +180,6 @@
       }
     }
 
-    // Sync manual inputs to collectedData
     [idProgramaInput, idPaleteInput].forEach(input => {
       input.addEventListener('input', () => {
         collectedData[input.id] = input.value.trim();
