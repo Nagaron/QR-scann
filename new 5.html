@@ -7,6 +7,7 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; margin: 0; }
+
     #controls {
       display: flex;
       flex-wrap: wrap;
@@ -14,18 +15,31 @@
       margin-bottom: 1em;
       align-items: center;
     }
+
     #controls > * {
       flex: 1 1 auto;
       min-width: 100px;
     }
-    #controls button, #controls input {
+
+    /* Buttons 80px tall */
+    #controls button {
       font-size: 1em;
-      height: 80px;           /* Set height to 80px */
-      padding-top: 0;         /* Remove top padding */
-      padding-bottom: 0;      /* Remove bottom padding */
-      line-height: 80px;      /* Vertically center text */
+      height: 80px;
+      padding-top: 0;
+      padding-bottom: 0;
+      line-height: 80px;
       flex: 1 1 100%;
     }
+
+    /* Inputs 40px tall */
+    #controls input {
+      font-size: 1em;
+      height: 40px;
+      padding: 0 0.5em;
+      line-height: normal;
+      flex: 1 1 100%;
+    }
+
     #reader {
       width: 100%;
       aspect-ratio: 1 / 1;
@@ -33,42 +47,70 @@
       border: 1px solid #ccc;
       position: relative;
     }
+
     #reader video {
       object-fit: cover;
       width: 100% !important;
       height: 100% !important;
     }
+
+    /* Hide collected data display */
     #output {
-      background: #eee;
-      padding: 1em;
-      border-radius: 5px;
+      display: none;
     }
+
     @media (min-width: 600px) {
       #controls button, #controls input {
         flex: 1 1 auto;
         min-width: 120px;
       }
+
       #controls {
         gap: 1em;
       }
+    }
+
+    /* Layout adjustments */
+
+    /* Separate controls into two groups: inputs above, buttons below */
+    #inputControls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      margin-bottom: 1em;
+      align-items: center;
+    }
+
+    #buttonControls {
+      display: flex;
+      gap: 0.5em;
+      margin-bottom: 1em;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    #buttonControls button {
+      flex: 0 1 auto;
+      min-width: 120px;
     }
   </style>
 </head>
 <body>
   <h2>QR → Auto-Submit with Toggle & Reset</h2>
 
-  <div id="controls">
-    <button id="cameraToggleBtn">📷 Turn Camera On</button>
-
+  <div id="inputControls">
     <!-- Manual input fields for Program ID and Pallet ID -->
     <input type="text" id="id_programa" placeholder="Program ID" autocomplete="off" />
     <input type="text" id="id_palete" placeholder="Pallet ID" autocomplete="off" />
-
     <input type="number" id="steviloKosov" placeholder="Št. Kosov" min="0" />
-    <button id="submitBtn">Submit Now</button>
   </div>
 
   <div id="reader"></div>
+
+  <div id="buttonControls">
+    <button id="cameraToggleBtn">📷 Turn Camera On</button>
+    <button id="submitBtn">Submit Now</button>
+  </div>
 
   <div id="output">
     <h3>Collected Data:</h3>
@@ -89,8 +131,8 @@
     let isCameraOn = false;
 
     function updateDisplay() {
-      document.getElementById('dataDisplay').textContent =
-        JSON.stringify(collectedData, null, 2);
+      // We hide the collected data display, so no need to update it visibly
+      // but keep internal data updated anyway
     }
 
     function handleScannedData(text) {
@@ -143,8 +185,8 @@
       const postUrl =
         "https://docs.google.com/forms/d/e/1FAIpQLSdp4CYaItEcH74mzBMkLUkwU8qW4VsSFSUe56tYmXMO2Ex2cQ/formResponse";
       const params = new URLSearchParams({
-        "entry.486792126": collectedData.id_palete || "",
-        "entry.2022164257": collectedData.id_programa || "",
+        "entry.486792126": collectedData.id_palete || idPaleteInput.value || "",
+        "entry.2022164257": collectedData.id_programa || idProgramaInput.value || "",
         "entry.446298209": steviloKosov.value || ""
       });
       try {
@@ -155,7 +197,7 @@
           body: params.toString()
         });
         alert("✓ Data submitted!");
-        // Clear inputs and data after submit
+        // Clear inputs and collected data after submit
         steviloKosov.value = '';
         idProgramaInput.value = '';
         idPaleteInput.value = '';
